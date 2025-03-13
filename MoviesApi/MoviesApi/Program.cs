@@ -1,5 +1,5 @@
-
 using Microsoft.OpenApi.Models;
+using MoviesApi.Data;
 
 namespace MoviesApi
 {
@@ -14,27 +14,33 @@ namespace MoviesApi
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen(op =>
+            builder.Services.AddCors();
+            builder.Services.AddDbContext<ApplicationDbContext>(op =>
             {
-                op.SwaggerDoc("v1", new OpenApiInfo
+                op.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+            });
+            #region Swagger configurations
+            builder.Services.AddSwaggerGen(op =>
                 {
-                    Title = "My Movies Api",
-                    Version = "v1",
-                    Contact = new OpenApiContact { Email = "HeshamElsayedAhmed@outlock.com", Name = "Me" }
-                });
+                    op.SwaggerDoc("v1", new OpenApiInfo
+                    {
+                        Title = "My Movies Api",
+                        Version = "v1",
+                        Contact = new OpenApiContact { Email = "HeshamElsayedAhmed@outlock.com", Name = "Me" }
+                    });
 
-                op.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-                {
-                    Name = "Authorization",
-                    Description = "Enter your token",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.Http,
-                    BearerFormat = "JWT",
-                    Scheme = "Bearer",
-                });
+                    op.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                    {
+                        Name = "Authorization",
+                        Description = "Enter your token",
+                        In = ParameterLocation.Header,
+                        Type = SecuritySchemeType.Http,
+                        BearerFormat = "JWT",
+                        Scheme = "Bearer",
+                    });
 
-                op.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
+                    op.AddSecurityRequirement(new OpenApiSecurityRequirement
+                    {
                     {
                        new OpenApiSecurityScheme
                        {
@@ -47,8 +53,9 @@ namespace MoviesApi
                        new List<string>()
                     }
 
-                });
-            });
+                    });
+                }); 
+            #endregion
 
             var app = builder.Build();
 
@@ -60,7 +67,7 @@ namespace MoviesApi
             }
 
             app.UseHttpsRedirection();
-
+            app.UseCors(c=>c.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
             app.UseAuthorization();
 
 
