@@ -31,7 +31,7 @@ namespace MoviesApi.Controllers
         {
             var genre = new Genre { Name = dto.Name };
             await _context.Genres.AddAsync(genre);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return Ok(genre);
         }
 
@@ -44,7 +44,7 @@ namespace MoviesApi.Controllers
             if (genre is null)
                 return NotFound($"No genre with id {id} was found");
             genre.Name = dto.Name;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return Ok(genre);
         }
 
@@ -57,7 +57,7 @@ namespace MoviesApi.Controllers
             if (genre is null)
                 return NotFound($"No genre with id {id} was found");
             _context.Remove(genre);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return Ok("Genre Deleted Successfully");
         }
     }
