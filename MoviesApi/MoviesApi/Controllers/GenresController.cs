@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MoviesApi.DTOs.Genre;
 
 namespace MoviesApi.Controllers
 {

@@ -14,6 +14,6 @@ namespace MoviesApi.Models
         [Required]
         public byte[] Poster { get; set; }
         public byte GenreId { get; set; }
-        public Genre Genre { get; set; }
+        public virtual Genre Genre { get; set; }
     }
 }

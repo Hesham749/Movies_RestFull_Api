@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MoviesApi.DTOs.Movie;
+using MoviesApi.Models;
 
 namespace MoviesApi.Controllers
 {
@@ -14,6 +16,82 @@ namespace MoviesApi.Controllers
         public MoviesController(ApplicationDbContext context)
         {
             _context = context;
+        }
+
+        [HttpGet]
+        [ProducesResponseType(typeof(List<MovieDetailsDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetAllAsync()
+        {
+            var movies = await _context.Movies
+                .OrderByDescending(m => m.Rate)
+                .Include(m => m.Genre)
+                .Select(m => new MovieDetailsDto
+                (
+                     m.Id,
+                     m.Title,
+                    m.Year,
+                     m.Rate,
+                     m.StoryLine,
+                     m.GenreId,
+                     m.Genre.Name,
+                     m.Poster
+                ))
+                .AsNoTracking()
+                .ToListAsync();
+            return movies.Count == 0 ? NotFound($"No movies were found") : Ok(movies);
+        }
+
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(MovieDetailsDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetByIdAsync(int id)
+        {
+            var movie = await _context.Movies.Include(m => m.Genre)
+                .AsNoTracking()
+                .SingleOrDefaultAsync(m => m.Id == id);
+            if (movie is null)
+                return NotFound($"No movie with id {id}");
+            var dto = new MovieDetailsDto(
+                id,
+                movie.Title,
+                movie.Year,
+                movie.Rate,
+                movie.StoryLine,
+                movie.GenreId,
+                movie.Genre.Name,
+                movie.Poster
+                );
+            return Ok(dto);
+        }
+
+        [HttpGet("GetByGenreId/{id}")]
+        [ProducesResponseType(typeof(List<MovieDetailsDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetByGenreIdAsync(int id)
+        {
+            var genre = await _context.Genres.SingleOrDefaultAsync(m => m.Id == id);
+            if (genre is null) return BadRequest($"No genre with id {id}");
+            var movies = await _context.Movies
+            .Where(m => m.GenreId == id)
+            .OrderBy(m => m.Rate)
+            .Include(m => m.Genre)
+            .Select(m => new MovieDetailsDto(
+                m.Id,
+                m.Title,
+                m.Year,
+                m.Rate,
+                m.StoryLine,
+                m.GenreId,
+                m.Genre.Name,
+                m.Poster
+                )
+            )
+            .AsNoTracking()
+            .ToListAsync();
+
+            return movies.Count == 0 ? NotFound($"No Movies in {genre.Name} genre!") : Ok(movies);
         }
 
         [HttpPost]
@@ -41,6 +119,19 @@ namespace MoviesApi.Controllers
             await _context.AddAsync(movie);
             await _context.SaveChangesAsync();
             return Ok(movie);
+        }
+
+
+        [HttpDelete("{id}")]
+        [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> DeleteAsync(int id)
+        {
+            var movie = await _context.Movies.FindAsync(id);
+            if (movie is null) return BadRequest($"No movie with id {id}!");
+            _context.Movies.Remove(movie);
+            await _context.SaveChangesAsync();
+            return Ok("Movie deleted successfully!");
         }
 
     }
