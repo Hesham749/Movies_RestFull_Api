@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 
 namespace MoviesApi.Controllers
@@ -27,18 +26,7 @@ namespace MoviesApi.Controllers
         {
             var movies = await _unitOfWorks.Movies.GetAllAsync();
             if (!movies.Any()) return NotFound($"No movies where found!");
-            return Ok(movies.ToList()
-            .Select(m => new MovieDetailsDto
-            (
-                 m.Id,
-                 m.Title,
-                m.Year,
-                 m.Rate,
-                 m.StoryLine,
-                 m.GenreId,
-                 m.Genre.Name,
-                 m.Poster
-            )));
+            return Ok(movies.ToList().Select(m => m.ToMoviesDto()));
 
         }
 
@@ -50,16 +38,7 @@ namespace MoviesApi.Controllers
             var movie = await _unitOfWorks.Movies.GetByIdAsync(id);
             if (movie is null)
                 return NotFound($"No movie with id {id}");
-            var dto = new MovieDetailsDto(
-                id,
-                movie.Title,
-                movie.Year,
-                movie.Rate,
-                movie.StoryLine,
-                movie.GenreId,
-                movie.Genre.Name,
-                movie.Poster
-                );
+            var dto = movie.ToMoviesDto();
             return Ok(dto);
         }
 
@@ -73,19 +52,7 @@ namespace MoviesApi.Controllers
             if (genre is null) return BadRequest($"No genre with id {id}");
             var movies = await _unitOfWorks.Movies.GetAllAsync(m => m.GenreId == id);
             if (!movies.Any()) return NotFound($"No Movies in {genre.Name} genre!");
-            return Ok(
-            movies.ToList()
-            .Select(m => new MovieDetailsDto(
-                m.Id,
-                m.Title,
-                m.Year,
-                m.Rate,
-                m.StoryLine,
-                m.GenreId,
-                m.Genre.Name,
-                m.Poster
-                )
-            ));
+            return Ok(movies.ToList().Select(m => m.ToMoviesDto()));
         }
 
         [HttpPost]
@@ -104,17 +71,7 @@ namespace MoviesApi.Controllers
             var isValidGenre = await _unitOfWorks.Movies.AnyAsync(m => m.GenreId == dto.GenreId);
             if (!isValidGenre) return BadRequest($"Invalid genre ID!");
 
-            using var dataStream = new MemoryStream();
-            await dto.Poster.CopyToAsync(dataStream);
-            var movie = new Movie
-            {
-                GenreId = dto.GenreId,
-                Title = dto.Title,
-                Poster = dataStream.ToArray(),
-                Rate = dto.Rate,
-                StoryLine = dto.StoryLine,
-                Year = dto.Year,
-            };
+            var movie = dto.ToMovie();
             await _unitOfWorks.Movies.AddAsync(movie);
             _unitOfWorks.Save();
             return Ok(movie);
