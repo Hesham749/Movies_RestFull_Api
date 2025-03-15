@@ -54,7 +54,6 @@ namespace MoviesApi.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteAsync([FromRoute] int id)
         {
-            //var genre = await _context.Genres.FirstOrDefaultAsync(g => g.Id == id);
             var genre = await _unitOfWork.Genres.GetByIdAsync(id);
             if (genre is null)
                 return NotFound($"No genre with id {id} was found");
