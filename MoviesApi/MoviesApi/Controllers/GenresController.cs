@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using MoviesApi.DTOs.Genre;
+using MoviesApi.Interfaces;
 
 namespace MoviesApi.Controllers
 {
@@ -9,11 +9,11 @@ namespace MoviesApi.Controllers
     [Produces("application/json")]
     public class GenresController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IUnitOfWorks _unitOfWork;
 
-        public GenresController(ApplicationDbContext context)
+        public GenresController(IUnitOfWorks unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
@@ -21,8 +21,8 @@ namespace MoviesApi.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetAllAsync()
         {
-            var Genres = await _context.Genres.OrderBy(g => g.Name).AsNoTracking().ToListAsync();
-            return Genres.Count != 0 ? Ok(Genres) : NotFound("No Genres Was Found");
+            var Genres = await _unitOfWork.Genres.GetAllAsync();
+            return Genres.Any() ? Ok(Genres) : NotFound("No Genres Was Found");
         }
 
         [HttpPost]
@@ -31,8 +31,8 @@ namespace MoviesApi.Controllers
         public async Task<IActionResult> CreateAsync([FromBody] CreateGenreDto dto)
         {
             var genre = new Genre { Name = dto.Name };
-            await _context.Genres.AddAsync(genre);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.Genres.AddAsync(genre);
+            _unitOfWork.Save();
             return Ok(genre);
         }
 
@@ -41,11 +41,11 @@ namespace MoviesApi.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateAsync([FromRoute] int id, [FromBody] CreateGenreDto dto)
         {
-            var genre = await _context.Genres.FirstOrDefaultAsync(g => g.Id == id);
+            var genre = await _unitOfWork.Genres.GetByIdAsync(id);
             if (genre is null)
                 return NotFound($"No genre with id {id} was found");
             genre.Name = dto.Name;
-            await _context.SaveChangesAsync();
+            _unitOfWork.Save();
             return Ok(genre);
         }
 
@@ -54,11 +54,12 @@ namespace MoviesApi.Controllers
         [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteAsync([FromRoute] int id)
         {
-            var genre = await _context.Genres.FirstOrDefaultAsync(g => g.Id == id);
+            //var genre = await _context.Genres.FirstOrDefaultAsync(g => g.Id == id);
+            var genre = await _unitOfWork.Genres.GetByIdAsync(id);
             if (genre is null)
                 return NotFound($"No genre with id {id} was found");
-            _context.Remove(genre);
-            await _context.SaveChangesAsync();
+            _unitOfWork.Genres.Delete(genre);
+            _unitOfWork.Save();
             return Ok("Genre Deleted Successfully");
         }
     }

@@ -1,5 +1,7 @@
 using Microsoft.OpenApi.Models;
 using MoviesApi.Data;
+using MoviesApi.Interfaces;
+using MoviesApi.Repositories;
 
 namespace MoviesApi
 {
@@ -15,6 +17,7 @@ namespace MoviesApi
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddCors();
+            builder.Services.AddTransient<IUnitOfWorks, UnitOfWorks>();
             builder.Services.AddDbContext<ApplicationDbContext>(op =>
             {
                 op.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -54,7 +57,7 @@ namespace MoviesApi
                     }
 
                     });
-                }); 
+                });
             #endregion
 
             var app = builder.Build();
@@ -67,7 +70,7 @@ namespace MoviesApi
             }
 
             app.UseHttpsRedirection();
-            app.UseCors(c=>c.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
+            app.UseCors(c => c.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
             app.UseAuthorization();
 
 

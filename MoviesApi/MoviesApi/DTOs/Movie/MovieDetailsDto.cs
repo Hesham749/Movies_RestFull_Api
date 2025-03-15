@@ -10,5 +10,5 @@
         byte GenreId,
         string GenreName,
         byte[] Poster
-    );
+    ) : IRecord;
 }
