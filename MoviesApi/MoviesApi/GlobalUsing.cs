@@ -5,5 +5,6 @@ global using MoviesApi.DTOs.Genre;
 global using MoviesApi.DTOs.Movie;
 global using MoviesApi.Interfaces;
 global using MoviesApi.Repositories;
+global using MoviesApi.Helper;
 global using System.ComponentModel.DataAnnotations;
 global using System.ComponentModel.DataAnnotations.Schema;
